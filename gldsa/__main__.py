@@ -1,5 +1,4 @@
 import os
-import json
 import argparse
 
 from gldsa.dependencies import Dependency, exportDependencies
@@ -8,6 +7,9 @@ from gldsa.octokit import Octokit
 parser = argparse.ArgumentParser(__name__)
 
 parser.add_argument("-g", "--gradle-lock", help="Gradle Lockfile")
+
+parser.add_argument("-sha", default=os.environ.get("GITHUB_SHA"), help="Commit SHA")
+parser.add_argument("-ref", default=os.environ.get("GITHUB_REF"), help="Commit ref")
 
 parser_github = parser.add_argument_group("GitHub")
 parser_github.add_argument(
@@ -19,8 +21,8 @@ parser_github.add_argument(
 parser_github.add_argument(
     "-gi",
     "--github-instance",
-    default=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
-    help="GitHub Instance",
+    default=os.environ.get("GITHUB_SERVER_URL", "https://api.github.com"),
+    help="GitHub API Instance",
 )
 parser_github.add_argument(
     "-t",
@@ -40,12 +42,13 @@ def findGradleLocks(path: str) -> list[str]:
                 results.append(os.path.join(root, file))
     return results
 
+
 def parseGradleLock(path: str) -> list[Dependency]:
     if not os.path.exists(path):
         raise Exception(f"File not found: {path}")
-    
+
     results = []
-    with open(path, 'r') as handle:
+    with open(path, "r") as handle:
         lines = handle.readlines()
 
     for line in lines:
@@ -72,6 +75,7 @@ def parseGradleLock(path: str) -> list[Dependency]:
             )
         )
     return results
+
 
 if __name__ == "__main__":
     arguments = parser.parse_args()
@@ -101,12 +105,14 @@ if __name__ == "__main__":
         owner, name = arguments.github_repository.split("/")
 
         octokit = Octokit(
-            owner=owner, repo=name,
+            owner=owner,
+            repo=name,
             token=arguments.github_token,
-            url=arguments.github_instance
+            url=arguments.github_instance,
         )
 
-        deps = exportDependencies(path, dependencies)
-        # print(json.dumps(deps, indent=4))
+        deps = exportDependencies(
+            path, dependencies, sha=arguments.sha, ref=arguments.ref
+        )
 
         octokit.submitDependencies(deps)

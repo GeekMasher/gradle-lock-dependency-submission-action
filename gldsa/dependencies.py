@@ -30,7 +30,7 @@ class Dependency:
         result += f"{self.name}"
         if self.version:
             result += f"@{self.version}"
-            
+
         return result
 
     def __str__(self) -> str:
@@ -39,8 +39,7 @@ class Dependency:
 
 
 def exportDependencies(source: str, dependencies: list[Dependency], **kwargs) -> dict:
-    """ Create a dependency graph submission JSON payload for GitHub
-    """
+    """Create a dependency graph submission JSON payload for GitHub"""
     resolved = {}
     for dep in dependencies:
         name = dep.getName()

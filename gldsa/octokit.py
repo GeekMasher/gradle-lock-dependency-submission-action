@@ -11,7 +11,10 @@ class Octokit:
         self.url = url
 
     def submitDependencies(self, dependencies: dict):
-        """Submit dependencies to GitHub"""
+        """Submit dependencies to GitHub
+
+        https://docs.github.com/en/enterprise-cloud@latest/rest/dependency-graph/dependency-submission?apiVersion=2022-11-28#create-a-snapshot-of-dependencies-for-a-repository
+        """
         url = f"{self.url}/repos/{self.owner}/{self.repo}/dependency-graph/snapshots"
         resp = requests.post(
             url,
