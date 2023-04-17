@@ -21,7 +21,6 @@ parser_github.add_argument(
 parser_github.add_argument(
     "-gi",
     "--github-instance",
-    default=os.environ.get("GITHUB_SERVER_URL", "https://api.github.com"),
     help="GitHub API Instance",
 )
 parser_github.add_argument(
@@ -87,6 +86,14 @@ if __name__ == "__main__":
         print("No GitHub Token")
         exit(1)
 
+    owner, name = arguments.github_repository.split("/")
+    octokit = Octokit(
+        owner=owner,
+        repo=name,
+        token=arguments.github_token,
+        # instance
+    )
+
     lock_files = []
     if arguments.gradle_lock:
         lock_files.append(arguments.gradle_lock)
@@ -101,15 +108,6 @@ if __name__ == "__main__":
         print(f"Found lockfile: {path}")
 
         dependencies = parseGradleLock(path)
-
-        owner, name = arguments.github_repository.split("/")
-
-        octokit = Octokit(
-            owner=owner,
-            repo=name,
-            token=arguments.github_token,
-            url=arguments.github_instance,
-        )
 
         deps = exportDependencies(
             path, dependencies, sha=arguments.sha, ref=arguments.ref
