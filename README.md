@@ -8,7 +8,8 @@ Gradle Lock Dependency Submission Action
 - name: Gradle Lock Dependency Submission Action
   uses: GeekMasher/gradle-lock-dependency-submission-action@main
   with:
-    # [optonal] The path to the gradle.lock file. Defaults to ./gradle.lock
+    # [optonal] The path to the gradle.lock file. Defaults to finding all gradle*.lock in the current
+    # working directory
     gradle-lock: "./gradle.lock"
     # [optional ] Token used to authenticate with the GitHub API. Defaults to the GITHUB_TOKEN secret.
     token: ${{ secrets.CODEQL_SUMMARY_GENERATOR_TOKEN }}
