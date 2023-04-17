@@ -30,3 +30,14 @@ jobs:
       run: |
         PYTHONPATH=$PWD:$PWD/vendor
         pipenv run python3 -m gldsa
+
+  action-test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run action
+      uses: ./
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
