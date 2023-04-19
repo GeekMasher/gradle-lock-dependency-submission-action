@@ -1,3 +1,4 @@
+import json
 import os
 import argparse
 
@@ -108,9 +109,13 @@ if __name__ == "__main__":
         print(f"Found lockfile: {path}")
 
         dependencies = parseGradleLock(path)
+        print(f"Dependencies :: {len(dependencies)}")
 
         deps = exportDependencies(
             path, dependencies, sha=arguments.sha, ref=arguments.ref
         )
+        print(json.dumps(deps, indent=2))
 
         octokit.submitDependencies(deps)
+        print(f"Uploaded :: {path}")
+
