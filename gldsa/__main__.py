@@ -110,9 +110,15 @@ if __name__ == "__main__":
 
         dependencies = parseGradleLock(path)
         print(f"Dependencies :: {len(dependencies)}")
+        
+        tmp_path = path.replace(".lockfile", "")
+        gradle_path = tmp_path if os.path.exists(tmp_path) else path
 
         deps = exportDependencies(
-            path, dependencies, sha=arguments.sha, ref=arguments.ref
+            gradle_path,
+            dependencies, 
+            sha=arguments.sha, 
+            ref=arguments.ref
         )
         print(json.dumps(deps, indent=2))
 
