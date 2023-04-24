@@ -9,7 +9,6 @@ from ghastoolkit.octokit.dependencygraph import (
     Dependency,
     Dependencies,
 )
-from yaml import parse
 
 from gldsa import __name__ as tool_name, __version__
 
