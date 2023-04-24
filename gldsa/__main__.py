@@ -1,14 +1,22 @@
 import json
 import os
 import argparse
+import ghastoolkit
 
-from gldsa.dependencies import Dependency, exportDependencies
-from gldsa.octokit import Octokit
+from ghastoolkit.octokit.github import GitHub
+from ghastoolkit.octokit.dependencygraph import (
+    DependencyGraph,
+    Dependency,
+    Dependencies,
+)
+from yaml import parse
+
+from gldsa import __name__ as tool_name, __version__
 
 parser = argparse.ArgumentParser(__name__)
 
 parser.add_argument("-g", "--gradle-lock", help="Gradle Lockfile")
-
+parser.add_argument("--dry-run", action="store_true")
 parser.add_argument("-sha", default=os.environ.get("GITHUB_SHA"), help="Commit SHA")
 parser.add_argument("-ref", default=os.environ.get("GITHUB_REF"), help="Commit ref")
 
@@ -43,11 +51,11 @@ def findGradleLocks(path: str) -> list[str]:
     return results
 
 
-def parseGradleLock(path: str) -> list[Dependency]:
+def parseGradleLock(path: str) -> Dependencies:
     if not os.path.exists(path):
         raise Exception(f"File not found: {path}")
 
-    results = []
+    results = Dependencies()
     with open(path, "r") as handle:
         lines = handle.readlines()
 
@@ -87,13 +95,16 @@ if __name__ == "__main__":
         print("No GitHub Token")
         exit(1)
 
-    owner, name = arguments.github_repository.split("/")
-    octokit = Octokit(
-        owner=owner,
-        repo=name,
+    GitHub.init(
+        repository=arguments.github_repository,
         token=arguments.github_token,
-        # instance
+        instance=arguments.github_instance,
     )
+
+    if not GitHub.repository:
+        raise Exception(f"Repository not set")
+
+    depgraph = DependencyGraph(GitHub.repository)
 
     lock_files = []
     if arguments.gradle_lock:
@@ -110,18 +121,22 @@ if __name__ == "__main__":
 
         dependencies = parseGradleLock(path)
         print(f"Dependencies :: {len(dependencies)}")
-        
+
         tmp_path = path.replace(".lockfile", "")
         gradle_path = tmp_path if os.path.exists(tmp_path) else path
 
-        deps = exportDependencies(
-            gradle_path,
-            dependencies, 
-            sha=arguments.sha, 
-            ref=arguments.ref
-        )
-        print(json.dumps(deps, indent=2))
+        if not arguments.dry_run:
+            print(f"Submitting Dependencies")
 
-        octokit.submitDependencies(deps)
-        print(f"Uploaded :: {path}")
+            depgraph.submitDependencies(
+                dependencies,
+                tool_name,
+                gradle_path,
+                sha=arguments.sha,
+                ref=arguments.ref,
+                version=__version__,
+            )
 
+            print(f"Uploaded :: {path}")
+
+    print("Done")
