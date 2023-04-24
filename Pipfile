@@ -15,4 +15,3 @@ main = "python -m gldsa"
 test = "python -m unittest discover -v -s ./tests -p 'test_*.py'"
 fmt = "black ./gldsa"
 lint = "black --check ./gldsa"
-
