@@ -105,11 +105,11 @@
         },
         "ghastoolkit": {
             "hashes": [
-                "sha256:092115e75948680f55648b24a10a7e107c6c5dc01d4c0212ad9b55f27eb95416",
-                "sha256:eeef3b46685849e5f8bb425cd7191fa720697bb093fd8105ce74689e1a952580"
+                "sha256:00d1679f9a4b6e561f7e40a5f6fc66efa92a4ce03268de4bca7e47972f902aa5",
+                "sha256:de2a181f0c1fcd1a0d096980ce12f18432383162a75e1de8f61b5f1c7ae5cfff"
             ],
             "index": "pypi",
-            "version": "==0.1.11"
+            "version": "==0.2.4"
         },
         "idna": {
             "hashes": [
