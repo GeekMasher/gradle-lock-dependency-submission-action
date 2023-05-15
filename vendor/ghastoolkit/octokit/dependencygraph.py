@@ -1,89 +1,100 @@
 import logging
-from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime
-from ghastoolkit.octokit.github import Repository
+import re
+from typing import Any
+import urllib.parse
 
-from ghastoolkit.octokit.octokit import Optional, RestRequest
+from ghastoolkit.octokit.github import GitHub, Repository
+from ghastoolkit.supplychain.advisories import Advisory
+from ghastoolkit.supplychain.dependencyalert import DependencyAlert
+from ghastoolkit.supplychain.dependencies import Dependencies, Dependency
+from ghastoolkit.octokit.octokit import GraphQLRequest, Optional, RestRequest
 
 logger = logging.getLogger("ghastoolkit.octokit.dependencygraph")
 
 
-@dataclass
-class Dependency:
-    name: str
-    namespace: Optional[str] = None
-    version: Optional[str] = None
-    manager: Optional[str] = None
-    path: Optional[str] = None
-    qualifiers: dict[str, str] = field(default_factory=list)
+class DependencyGraph:
+    def __init__(self, repository: Optional[Repository] = None) -> None:
+        self.repository = repository or GitHub.repository
+        self.rest = RestRequest(repository)
+        self.graphql = GraphQLRequest(repository)
 
-    def getPurl(self) -> str:
-        """Get PURL
-        https://github.com/package-url/purl-spec
-        """
-        result = f"pkg:"
-        if self.manager:
-            result += f"{self.manager}/"
-        if self.namespace:
-            result += f"{self.namespace}/"
-        result += f"{self.name}"
-        if self.version:
-            result += f"@{self.version}"
+    def getDependencies(self) -> Dependencies:
+        """Get Dependencies from SBOM"""
+        result = Dependencies()
+        spdx_bom = self.exportBOM()
+
+        for package in spdx_bom.get("sbom", {}).get("packages", []):
+            extref = False
+            dep = Dependency("")
+            for ref in package.get("externalRefs", []):
+                if ref.get("referenceType"):
+                    dep = Dependency.fromPurl(ref.get("referenceLocator"))
+                    extref = True
+
+            # if get find a PURL or not
+            if extref:
+                dep.licence = package.get("licenseConcluded")
+            else:
+                name = package.get("name", "")
+                # manager ':'
+                if ":" in name:
+                    dep.manager, name = name.split(":", 1)
+                # Namespace '/'
+                if "/" in package:
+                    dep.namespace, name = name.split("/", 1)
+
+                dep.name = name
+                dep.version = package.get("versionInfo")
+                dep.licence = package.get("licenseConcluded")
+
+            result.append(dep)
 
         return result
 
-    def __str__(self) -> str:
-        return self.getPurl()
+    def getDependenciesInPR(self, base: str, head: str) -> Dependencies:
+        """Get all the dependencies from a Pull Request"""
+        dependencies = Dependencies()
+        base = urllib.parse.quote(base, safe="")
+        head = urllib.parse.quote(head, safe="")
+        basehead = f"{base}...{head}"
+        logger.debug(f"PR basehead :: {basehead}")
+        results = self.rest.get(
+            "/repos/{owner}/{repo}/dependency-graph/compare/{basehead}",
+            {"basehead": basehead},
+            expected=200,
+        )
+        if not results:
+            return dependencies
 
-    def __repr__(self) -> str:
-        return self.getPurl()
+        for depdata in results:
+            if depdata.get("change_type") == "removed":
+                continue
 
+            dep = Dependency.fromPurl(depdata.get("package_url"))
+            dep.licence = depdata.get("license")
 
-class Dependencies(list[Dependency]):
-    def exportBOM(
-        self,
-        tool: str,
-        path: str,
-        sha: str = "",
-        ref: str = "",
-        version: str = "0.0.0",
-        url: str = "",
-    ) -> dict:
-        """Create a dependency graph submission JSON payload for GitHub"""
-        resolved = {}
-        for dep in self:
-            name = dep.name
-            purl = dep.getPurl()
-            resolved[name] = {"package_url": purl}
+            for alert in depdata.get("vulnerabilities", []):
+                dep_alert = DependencyAlert(
+                    alert.get("severity"),
+                    purl=dep.getPurl(False),
+                    advisory=Advisory(
+                        ghsa_id=alert.get("advisory_ghsa_id"),
+                        severity=alert.get("severity"),
+                        summary=alert.get("advisory_summary"),
+                        url=alert.get("advisory_ghsa_url"),
+                    ),
+                )
+                dep.alerts.append(dep_alert)
 
-        data = {
-            "version": 0,
-            "sha": sha,
-            "ref": ref,
-            "job": {"correlator": tool, "id": tool},
-            "detector": {"name": tool, "version": version, "url": url},
-            "scanned": datetime.now().isoformat(),
-            "manifests": {
-                tool: {
-                    "name": tool,
-                    "file": {
-                        "source_location": path,
-                    },
-                    "resolved": resolved,
-                }
-            },
-        }
-        return data
+            dependencies.append(dep)
 
+        return dependencies
 
-class DependencyGraph:
-    def __init__(self, repository: Repository) -> None:
-        self.rest = RestRequest(repository)
-
-    def exportBOM(self) -> dict:
-        bom = self.rest.get("/repos/{owner}/{repo}/dependency-graph/sbom")
-        return bom
+    def exportBOM(self) -> Dependencies:
+        """Download / Export DependencyGraph SBOM"""
+        return self.rest.get("/repos/{owner}/{repo}/dependency-graph/sbom")
 
     def submitDependencies(
         self,
@@ -101,5 +112,13 @@ class DependencyGraph:
         self.rest.postJson(
             "/repos/{owner}/{repo}/dependency-graph/snapshots",
             dependencies.exportBOM(tool, path, sha, ref, version, url),
+            expected=201,
+        )
+
+    def submitSbom(self, sbom: dict[Any, Any]):
+        """Submit SBOM"""
+        self.rest.postJson(
+            "/repos/{owner}/{repo}/dependency-graph/snapshots",
+            sbom,
             expected=201,
         )

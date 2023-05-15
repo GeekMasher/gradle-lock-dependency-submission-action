@@ -3,7 +3,7 @@ import os
 import logging
 import argparse
 
-from ghastoolkit import __name__ as name
+from ghastoolkit import __name__ as name, __banner__
 from ghastoolkit.octokit.github import GitHub
 from ghastoolkit.octokit.codescanning import CodeScanning
 from ghastoolkit.octokit.dependencygraph import (
@@ -47,6 +47,7 @@ def header(name: str):
     print("#" * 32)
     print(f"    {name}")
     print("#" * 32)
+    print("")
 
 
 # logger
@@ -54,6 +55,8 @@ logging.basicConfig(
     level=logging.DEBUG if arguments.debug or os.environ.get("DEBUG") else logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+
+print(__banner__)
 
 # GitHub Init
 GitHub.init(
@@ -72,6 +75,17 @@ if arguments.mode in ["all", "codescanning"]:
     alerts = codescanning.getAlerts()
 
     print(f"Total Alerts :: {len(alerts)}")
+
+    analyses = codescanning.getLatestAnalyses(GitHub.repository.reference)
+    print(f"\nTools:   ({len(analyses)})")
+
+    for analyse in analyses:
+        tool = analyse.get("tool", {}).get("name")
+        version = analyse.get("tool", {}).get("version")
+        created_at = analyse.get("created_at")
+
+        print(f" - {tool} v{version} ({created_at})")
+
 
 if arguments.mode in ["all", "dependencygraph"]:
     header("Dependency Graph")
