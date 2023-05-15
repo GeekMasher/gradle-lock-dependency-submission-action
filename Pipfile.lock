@@ -105,11 +105,11 @@
         },
         "ghastoolkit": {
             "hashes": [
-                "sha256:00d1679f9a4b6e561f7e40a5f6fc66efa92a4ce03268de4bca7e47972f902aa5",
-                "sha256:de2a181f0c1fcd1a0d096980ce12f18432383162a75e1de8f61b5f1c7ae5cfff"
+                "sha256:18b81f804b4cc4bb862ad6d1410d647272a571a6eb2a654ce1d5463529470e6a",
+                "sha256:f7a3e9a85f1c7be0f077f2a6180666f965f2d85c53b85045e86632c2cc6bc84d"
             ],
             "index": "pypi",
-            "version": "==0.2.4"
+            "version": "==0.2.5"
         },
         "idna": {
             "hashes": [
@@ -254,11 +254,11 @@
         },
         "platformdirs": {
             "hashes": [
-                "sha256:47692bc24c1958e8b0f13dd727307cff1db103fca36399f457da8e05f222fdc4",
-                "sha256:7954a68d0ba23558d753f73437c55f89027cf8f5108c19844d4b82e5af396335"
+                "sha256:412dae91f52a6f84830f39a8078cecd0e866cb72294a5c66808e74d5e88d251f",
+                "sha256:e2378146f1964972c03c085bb5662ae80b2b8c06226c54b2ff4aa9483e8a13a5"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==3.5.0"
+            "version": "==3.5.1"
         }
     }
 }
