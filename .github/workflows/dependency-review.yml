@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
         
       # Run snapshot
-      - name: Run action
+      - name: Run snapshot action
         uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
