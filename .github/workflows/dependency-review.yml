@@ -11,6 +11,13 @@ jobs:
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
+        
+      # Run snapshot
+      - name: Run snapshot action
+        uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v2
         with:
