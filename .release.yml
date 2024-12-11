@@ -1,0 +1,10 @@
+repository: "GeekMasher/gradle-lock-dependency-submission-action"
+version: "1.0.0"
+
+locations:
+  - name: "Action YAML"
+    paths:
+      - "README.md"
+      - "*.md"
+    patterns:
+      - "uses: GeekMasher/gradle-lock-dependency-submission-action@v{version}"
