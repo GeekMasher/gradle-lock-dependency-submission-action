@@ -1,8 +1,8 @@
 # https://github.com/nebula-plugins/gradle-dependency-lock-plugin/blob/main/gradle.lockfile
-
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+net.snowflake:snowflake-jdbc:3.13.20=integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
 cglib:cglib-nodep:3.2.2=integTestRuntimeClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-annotations:2.14.2=integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.fasterxml.jackson.core:jackson-core:2.14.2=integTestCompileClasspath,integTestRuntimeClasspath,testCompileClasspath,testRuntimeClasspath
